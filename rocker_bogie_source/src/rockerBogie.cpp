@@ -19,6 +19,10 @@
 #include "assets/ChTexture.h"
 #include "assets/ChColorAsset.h"
 #include "unit_IRRLICHT/ChIrrApp.h"
+#include "utils/ChUtilsInputOutput.h"
+#include "core/ChFileutils.h"
+#include "core/ChStream.h"
+#include "core/ChRealtimeStep.h"
 
 // Use the namespace of Chrono
 
@@ -37,7 +41,7 @@ using namespace irr::gui;
 ///////////////////////////setup variables////////////////////////////////////
 
 int iterSpeed = 1000;
-double timestep = .0001;
+double timestep = .001;
 
 //////////////////////////Robot Variables////////////////////////////////////
 double wheelRadius = 0.175;
@@ -60,41 +64,54 @@ double frontBeamAngVert = CH_C_PI / 1.8;
 
 bool fixed = false;
 
-
+#define USE_IRRLICHT
 
 
 int main(int argc, char* argv[]) {
 
+	const std::string out_dir = "../VEHICLE";
+	const std::string pov_dir = out_dir + "/POVRAY";
 
 	/////////////////////////Setup of the System/////////////////////////////////
 
     // Create a ChronoENGINE physical system
     ChSystem mphysicalSystem;
 	//Create the Irrlicht visualization system
+#ifdef USE_IRRLICHT
     ChIrrApp application(&mphysicalSystem, L"Rocker Bogie", core::dimension2d<u32>(1300, 900), false);  // screen dimensions
     application.AddTypicalLogo();
     application.AddTypicalSky();
     application.AddTypicalLights();
     application.AddTypicalCamera(core::vector3df(2, 2, -2), core::vector3df(0, 0.5, 0));  // to change the position of camera
-   
+#endif
+
 	//////////////////////////////Create the Robot//////////////////////////////////(Just one side)/////////////
 	//create the wheels
 	ChSharedPtr<ChBodyEasyCylinder> rearWheel(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	rearWheel->SetPos({0.2, 0.5, 0.0});
 	rearWheel->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
 	//rearWheel->SetBodyFixed(fixed);
+	rearWheel->GetMaterialSurface()->SetFriction(0.8);
+	rearWheel->GetMaterialSurface()->SetRollingFriction(0.1);
+	rearWheel->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(rearWheel);
 
 	ChSharedPtr<ChBodyEasyCylinder> middleWheel(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	middleWheel->SetPos({ 0.2, 0.5, 0.5 });
 	middleWheel->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
 	//middleWheel->SetBodyFixed(fixed);
+	middleWheel->GetMaterialSurface()->SetFriction(0.8);
+	middleWheel->GetMaterialSurface()->SetRollingFriction(0.1);
+	middleWheel->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(middleWheel);
 
 	ChSharedPtr<ChBodyEasyCylinder> frontWheel(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	frontWheel->SetPos({ 0.2, 0.5, 1.0 });
 	frontWheel->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
 	//frontWheel->SetBodyFixed(fixed);
+	frontWheel->GetMaterialSurface()->SetFriction(0.8);
+	frontWheel->GetMaterialSurface()->SetRollingFriction(0.1);
+	frontWheel->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(frontWheel);
 
 	//rear leg
@@ -140,13 +157,13 @@ int main(int argc, char* argv[]) {
 	vshape4->GetBoxGeometry().Rot = Q_from_AngAxis(.540, { 0, 1.0, 0 });
 	frontBeam->AddAsset(vshape4);
 
-	frontBeam->SetBodyFixed(fixed);
+	//frontBeam->SetBodyFixed(fixed);
 	mphysicalSystem.Add(frontBeam);
 
 	//front leg
 	ChSharedPtr<ChBodyEasyBox> frontLeg(new ChBodyEasyBox(0.02, 0.2, 0.02, tubeDensity, false, true));
 	frontLeg->SetPos({ 0.2, 0.6, 1.0 });
-	frontLeg->SetBodyFixed(fixed);
+	//frontLeg->SetBodyFixed(fixed);
 	mphysicalSystem.Add(frontLeg);
 
 
@@ -161,25 +178,34 @@ int main(int argc, char* argv[]) {
 	ChSharedPtr<ChBodyEasyCylinder> rearWheelL(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	rearWheelL->SetPos({ -.7, 0.5, 0.0 });
 	rearWheelL->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
-	rearWheelL->SetBodyFixed(fixed);
+	//rearWheelL->SetBodyFixed(fixed);
+	rearWheelL->GetMaterialSurface()->SetFriction(0.8);
+	rearWheelL->GetMaterialSurface()->SetRollingFriction(0.1);
+	rearWheelL->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(rearWheelL);
 
 	ChSharedPtr<ChBodyEasyCylinder> middleWheelL(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	middleWheelL->SetPos({ -.7, 0.5, 0.5 });
 	middleWheelL->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
-	middleWheelL->SetBodyFixed(fixed);
+	//middleWheelL->SetBodyFixed(fixed);
+	middleWheelL->GetMaterialSurface()->SetFriction(0.8);
+	middleWheelL->GetMaterialSurface()->SetRollingFriction(0.1);
+	middleWheelL->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(middleWheelL);
 
 	ChSharedPtr<ChBodyEasyCylinder> frontWheelL(new ChBodyEasyCylinder(0.1, .15, 100, true, true));
 	frontWheelL->SetPos({ -.7, 0.5, 1.0 });
 	frontWheelL->SetRot(Q_from_AngAxis(CH_C_PI / 2.0, { 0, 0, 1.0 }));
-	frontWheelL->SetBodyFixed(fixed);
+	//frontWheelL->SetBodyFixed(fixed);
+	frontWheelL->GetMaterialSurface()->SetFriction(0.8);
+	frontWheelL->GetMaterialSurface()->SetRollingFriction(0.1);
+	frontWheelL->GetMaterialSurface()->SetRestitution(0.0);
 	mphysicalSystem.Add(frontWheelL);
 
 	//rear leg
 	ChSharedPtr<ChBodyEasyBox> rearLegL(new ChBodyEasyBox(0.02, 0.2, 0.02, tubeDensity, false, true));
 	rearLegL->SetPos({ -.7, 0.6, 0 });
-	rearLegL->SetBodyFixed(fixed);
+	//rearLegL->SetBodyFixed(fixed);
 	mphysicalSystem.Add(rearLegL);
 
 	//rear beam
@@ -211,21 +237,21 @@ int main(int argc, char* argv[]) {
 	vshape3L->GetBoxGeometry().SetLengths({ 0.02, 0.02, 0.320 });
 	vshape3L->GetBoxGeometry().Pos = { -.55, 0.6, 0.625 };
 	vshape3L->GetBoxGeometry().Rot = Q_from_AngAxis(-.675, { 1.0, 0, 0 });
-	frontBeam->AddAsset(vshape3L);
+	frontBeamL->AddAsset(vshape3L);
 
 	ChSharedPtr<ChBoxShape> vshape4L(new ChBoxShape());
 	vshape4L->GetBoxGeometry().SetLengths({ 0.02, 0.02, 0.292 });
 	vshape4L->GetBoxGeometry().Pos = { -.625, 0.7, 0.875 };
 	vshape4L->GetBoxGeometry().Rot = Q_from_AngAxis(-.540, { 0, 1.0, 0 });
-	frontBeam->AddAsset(vshape4L);
+	frontBeamL->AddAsset(vshape4L);
 
-	frontBeam->SetBodyFixed(fixed);
+	//frontBeam->SetBodyFixed(fixed);
 	mphysicalSystem.Add(frontBeamL);
 
 	//front leg
 	ChSharedPtr<ChBodyEasyBox> frontLegL(new ChBodyEasyBox(0.02, 0.2, 0.02, tubeDensity, false, true));
 	frontLegL->SetPos({ -.7, 0.6, 1.0 });
-	frontLegL->SetBodyFixed(fixed);
+	//frontLegL->SetBodyFixed(fixed);
 	mphysicalSystem.Add(frontLegL);
 
 
@@ -313,7 +339,7 @@ int main(int argc, char* argv[]) {
 	ChSharedPtr<ChLinkEngine> motor2(new ChLinkEngine);
 	motor2->Initialize(middleWheel, frontBeam,
 		ChCoordsys<>({ 0.2, 0.5, 0.5 }, Q_from_AngAxis(CH_C_PI / 2.0, { 0, 1.0, 0 })));
-	motor1->Set_eng_mode(ChLinkEngine::ENG_MODE_SPEED);
+	motor2->Set_eng_mode(ChLinkEngine::ENG_MODE_SPEED);
 	if (ChSharedPtr<ChFunction_Const> mfun2 = motor2->Get_spe_funct().DynamicCastTo<ChFunction_Const>())
 		mfun2->Set_yconst(0);  // speed w=90°/s
 	mphysicalSystem.AddLink(motor2);
@@ -346,7 +372,7 @@ int main(int argc, char* argv[]) {
 	motor6->Initialize(frontWheelL, frontLegL,
 		ChCoordsys<>({ -.7, 0.5, 1.0 }, Q_from_AngAxis(CH_C_PI / 2.0, { 0, 1.0, 0 })));
 	motor6->Set_eng_mode(ChLinkEngine::ENG_MODE_SPEED);
-	if (ChSharedPtr<ChFunction_Const> mfun6 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>())
+	if (ChSharedPtr<ChFunction_Const> mfun6 = motor6->Get_spe_funct().DynamicCastTo<ChFunction_Const>())
 		mfun6->Set_yconst(0);  // speed w=90°/s
 	mphysicalSystem.AddLink(motor6);
 	
@@ -386,8 +412,6 @@ int main(int argc, char* argv[]) {
 
 
 
-
-
 	////////////////////////////Setup floor and Obstacles////////////////////////
 	ChSharedPtr<ChBodyEasyBox> ground(new ChBodyEasyBox(50.0, 6.0, 50, 5000.0, true, true));
 	ground->SetPos({ 0.0, -3.0, 0.0 });
@@ -398,28 +422,117 @@ int main(int argc, char* argv[]) {
 	mcolor->SetColor(ChColor(0.2, 0.25, 0.25));
 	ground->AddAsset(mcolor);
 
-	////////////////////////////Initialize the Simulation////////////////////////
+	ChSharedPtr<ChBodyEasyBox> step(new ChBodyEasyBox(5.0, 0.5, 4.0, 5000.0, true, true));
+	step->SetPos({ 0, 0.25, 3.5 });
+	step->SetBodyFixed(true);
+	mphysicalSystem.Add(step);
 
+	ChSharedPtr<ChBodyEasyBox> step2(new ChBodyEasyBox(5.0, 0.5, 2.0, 5000.0, true, true));
+	step2->SetPos({ 0, 0.75, 4.5 });
+	step2->SetBodyFixed(true);
+	mphysicalSystem.Add(step2);
+
+	ChSharedPtr<ChBodyEasyBox> step3(new ChBodyEasyBox(5.0, 0.5, 4.0, 5000.0, true, true));
+	step3->SetPos({ 0, 0.25, -2.5 });
+	step3->SetBodyFixed(true);
+	mphysicalSystem.Add(step3);
+
+	ChSharedPtr<ChBodyEasyBox> step4(new ChBodyEasyBox(5.0, 0.5, 2.0, 5000.0, true, true));
+	step4->SetPos({ 0, 0.75, -3.5 });
+	step4->SetBodyFixed(true);
+	mphysicalSystem.Add(step4);
+
+	ChSharedPtr<ChColorAsset> stepColor(new ChColorAsset());
+	stepColor->SetColor(ChColor(0.2, 0.6, 0.25));
+	step->AddAsset(stepColor);
+	step2->AddAsset(stepColor);
+	step3->AddAsset(stepColor);
+	step4->AddAsset(stepColor);
+
+
+	////////////////////////////Initialize the Simulation////////////////////////
+#ifdef USE_IRRLICHT
     application.AssetBindAll();
     // Use this function for 'converting' assets into Irrlicht meshes
     application.AssetUpdateAll();
+	application.SetTimestep(timestep);
     // Adjust some settings:
+
+#else
+	double render_step_size = 1.0 / 50;
+	int render_steps = (int)std::ceil(render_step_size / timestep);
+	int render_frame = 0;
+
+	if (ChFileutils::MakeDirectory(out_dir.c_str()) < 0) {
+		std::cout << "Error creating directory " << out_dir << std::endl;
+		return 1;
+	}
+	if (ChFileutils::MakeDirectory(pov_dir.c_str()) < 0) {
+		std::cout << "Error creating directory " << pov_dir << std::endl;
+		return 1;
+	}
+
+	char filename[100];
+
+
+#endif
 	mphysicalSystem.SetIterLCPmaxItersSpeed(iterSpeed);
 	mphysicalSystem.SetIterLCPmaxItersStab(100);
-    application.SetTimestep(timestep);
+    
     //application.SetTryRealtime(true);
 	float time = 0.0;
 	long step_number = 0;
+
+
+
+	
+	ChSharedPtr<ChFunction_Const> mfun1 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun1->Set_yconst(CH_C_PI / 4.0);
+	ChSharedPtr<ChFunction_Const> mfun2 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun2->Set_yconst(CH_C_PI / 2.0);
+	ChSharedPtr<ChFunction_Const> mfun3 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun3->Set_yconst(3.0*CH_C_PI / 4.0);
+	ChSharedPtr<ChFunction_Const> mfun4 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun4->Set_yconst(CH_C_PI);
+	ChSharedPtr<ChFunction_Const> mfun5 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun5->Set_yconst(2.0*CH_C_PI);
+	ChSharedPtr<ChFunction_Const> mfun6 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun6->Set_yconst(4.0*CH_C_PI);
+	ChSharedPtr<ChFunction_Const> mfun0 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+	mfun0->Set_yconst(0);
+	
+
 	
 	////////////////////////////Simulation Loop//////////////////////////////////
 
-    while (application.GetDevice()->run()) {
-        application.BeginScene();
+#ifdef USE_IRRLICHT
+	while (application.GetDevice()->run()) {
+		application.BeginScene();
 
-        application.DrawAll();
+		application.DrawAll();
 
-        // This performs the integration timestep!
-        application.DoStep();
+		// This performs the integration timestep!
+		application.DoStep();
+#else
+	while (time<35.0) {
+		
+		mphysicalSystem.DoStepDynamics(timestep);
+
+
+		if (step_number % render_steps == 0) {
+
+			// Output render data
+			sprintf(filename, "%s/data_%04d.dat", pov_dir.c_str(), render_frame + 1);
+			utils::WriteShapesPovray(&mphysicalSystem, filename);
+			std::cout << "Output frame:   " << render_frame << std::endl;
+			std::cout << "Sim frame:      " << step_number << std::endl;
+			std::cout << "Time:           " << time << std::endl;
+			std::cout << std::endl;
+			render_frame++;
+		}
+#endif
+
+
 
 		if (step_number % 100 == 0){
 			std::cout << "Time:   " << time << std::endl;
@@ -428,9 +541,69 @@ int main(int argc, char* argv[]) {
 		//for (long j = 0; j < 200; j++){
 		//	printf("waiting\n");
 		//}
-        application.EndScene();
+		if (step_number == 500){
+			ChSharedPtr<ChFunction_Const> mfun1 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun1->Set_yconst(2.0*CH_C_PI);
+			ChSharedPtr<ChFunction_Const> mfun2 = motor2->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun2->Set_yconst(CH_C_PI);
+			ChSharedPtr<ChFunction_Const> mfun3 = motor3->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun3->Set_yconst(CH_C_PI);
+			ChSharedPtr<ChFunction_Const> mfun4 = motor4->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun4->Set_yconst(2.0*CH_C_PI);
+			ChSharedPtr<ChFunction_Const> mfun5 = motor5->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun5->Set_yconst(CH_C_PI);
+			ChSharedPtr<ChFunction_Const> mfun6 = motor6->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun6->Set_yconst(CH_C_PI);
+
+			motor7->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor8->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor9->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor10->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			
+		}
+
+		if (step_number == 16000){
+			motor1->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun1 = motor1->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun1->Set_yconst(-1);
+			motor2->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun2 = motor2->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun2->Set_yconst(-1);
+			motor3->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun3 = motor3->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun3->Set_yconst(-1);
+			motor4->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun4 = motor4->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun4->Set_yconst(-1);
+			motor5->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun5 = motor5->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun5->Set_yconst(-1);
+			motor6->Set_eng_mode(ChLinkEngine::ENG_MODE_TORQUE);
+			ChSharedPtr<ChFunction_Const> mfun6 = motor6->Get_spe_funct().DynamicCastTo<ChFunction_Const>();
+			mfun6->Set_yconst(-1);
+
+			motor7->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor8->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor9->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+			motor10->Set_eng_mode(ChLinkEngine::ENG_SHAFT_LOCK);
+
+		}
+
+		//if (step_number % 100 == 0){
+		//	std::cout << "Torque7: " << motor7->Get_react_torque().x << ", " << motor7->Get_react_torque().y << ", " << motor7->Get_react_torque().z << std::endl;
+		//	std::cout << "Function7: " << motor7->Get_spe_funct().DynamicCastTo<ChFunction_Const>()->Get_yconst() <<  std::endl;
+		//	std::cout << "Torque1: " << motor1->Get_react_torque().x << ", " << motor1->Get_react_torque().y << ", " << motor1->Get_react_torque().z << std::endl;
+		//}
+#ifdef USE_IRRLICHT
+		application.EndScene();
+#else
+
+#endif
+        
 		time += timestep;
 		step_number++;
+
+
     }
     return 0;
 }
